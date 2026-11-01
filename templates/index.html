@@ -1,0 +1,706 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#2563eb">
+  <meta name="description" content="MediReminder – Smart Medicine Reminder and Adherence Tracking System (IDP2502)">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="MediReminder">
+  
+  <title>MediReminder – Smart Medicine Reminder & Adherence Tracking (IDP2502)</title>
+
+  <!-- PWA Manifest & Favicon -->
+  <link rel="manifest" href="/manifest.json">
+  <link rel="icon" type="image/svg+xml" href="/static/icons/icon.svg">
+  <link rel="apple-touch-icon" href="/static/icons/icon-192.png">
+
+  <!-- Google Fonts: Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <!-- Bootstrap 5 & Bootstrap Icons CSS -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+
+  <!-- Custom Healthcare Stylesheet -->
+  <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+
+  <!-- Toast Notification Container -->
+  <div class="toast-container-custom" id="toastContainer"></div>
+
+  <!-- =========================================================================
+       1. AUTHENTICATION VIEW (Shown when unauthenticated)
+       ========================================================================= -->
+  <div id="authContainer" class="d-none min-vh-100 d-flex align-items-center justify-content-center py-5 px-3" style="background: linear-gradient(135deg, #eff6ff 0%, #f8fafc 100%);">
+    <div class="card card-modern shadow-lg p-4 p-md-5" style="max-width: 480px; width: 100%;">
+      
+      <!-- App Header / Brand -->
+      <div class="text-center mb-4">
+        <div class="brand-icon-box mx-auto mb-3" style="width: 56px; height: 56px; font-size: 1.8rem;">
+          <i class="bi bi-capsule-pill"></i>
+        </div>
+        <h3 class="fw-bold text-dark mb-1">MediReminder</h3>
+        <p class="text-muted small mb-0">Smart Medicine Reminder & Adherence Tracking System</p>
+        <span class="badge bg-primary-subtle text-primary border border-primary-subtle mt-1">Project IDP2502</span>
+      </div>
+
+      <!-- Auth Tab Navigation -->
+      <ul class="nav nav-pills nav-fill mb-4 bg-light p-1 rounded-3" id="authTabs" role="tablist">
+        <li class="nav-item" role="presentation">
+          <button class="nav-link active fw-semibold" id="tab-login" data-bs-toggle="pill" data-bs-target="#panel-login" type="button" role="tab">Sign In</button>
+        </li>
+        <li class="nav-item" role="presentation">
+          <button class="nav-link fw-semibold" id="tab-register" data-bs-toggle="pill" data-bs-target="#panel-register" type="button" role="tab">Create Account</button>
+        </li>
+      </ul>
+
+      <div class="tab-content" id="authTabContent">
+        <!-- Sign In Form -->
+        <div class="tab-pane fade show active" id="panel-login" role="tabpanel">
+          <form id="loginForm">
+            <div class="mb-3">
+              <label class="form-label small fw-semibold text-muted">Username or Email</label>
+              <div class="input-group">
+                <span class="input-group-text bg-light"><i class="bi bi-person"></i></span>
+                <input type="text" class="form-control" id="loginUsername" placeholder="e.g. demo_patient" required>
+              </div>
+            </div>
+            <div class="mb-3">
+              <label class="form-label small fw-semibold text-muted">Password</label>
+              <div class="input-group">
+                <span class="input-group-text bg-light"><i class="bi bi-key"></i></span>
+                <input type="password" class="form-control" id="loginPassword" placeholder="••••••••" required>
+              </div>
+            </div>
+            <button type="submit" class="btn btn-primary-custom w-100 justify-content-center py-2 mb-3">
+              <i class="bi bi-box-arrow-in-right"></i> Sign In to MediReminder
+            </button>
+          </form>
+
+          <!-- Quick Demo Login Helper for Evaluator -->
+          <div class="p-3 bg-light rounded-3 text-center border">
+            <div class="small fw-semibold text-muted mb-2">College Project Demonstration:</div>
+            <button class="btn btn-sm btn-outline-primary w-100" type="button" id="btnFillDemoLogin">
+              <i class="bi bi-lightning-charge me-1"></i> Fill Demo Credentials (demo_patient)
+            </button>
+          </div>
+        </div>
+
+        <!-- Register Form -->
+        <div class="tab-pane fade" id="panel-register" role="tabpanel">
+          <form id="registerForm">
+            <div class="mb-2">
+              <label class="form-label small fw-semibold text-muted">Full Name</label>
+              <input type="text" class="form-control" id="regFullName" placeholder="e.g. Akash Sharma" required>
+            </div>
+            <div class="mb-2">
+              <label class="form-label small fw-semibold text-muted">Username</label>
+              <input type="text" class="form-control" id="regUsername" placeholder="e.g. akash25" required>
+            </div>
+            <div class="mb-2">
+              <label class="form-label small fw-semibold text-muted">Email Address</label>
+              <input type="email" class="form-control" id="regEmail" placeholder="akash@example.com" required>
+            </div>
+            <div class="mb-2">
+              <label class="form-label small fw-semibold text-muted">Password (min 6 characters)</label>
+              <input type="password" class="form-control" id="regPassword" placeholder="••••••••" minlength="6" required>
+            </div>
+            <div class="mb-3">
+              <label class="form-label small fw-semibold text-muted">Timezone</label>
+              <select class="form-select" id="regTimezone">
+                <option value="Asia/Kolkata" selected>Asia/Kolkata (IST +05:30)</option>
+                <option value="UTC">UTC (Coordinated Universal Time)</option>
+                <option value="America/New_York">America/New_York (EST)</option>
+                <option value="Europe/London">Europe/London (GMT/BST)</option>
+              </select>
+            </div>
+            <button type="submit" class="btn btn-success-custom w-100 justify-content-center py-2">
+              <i class="bi bi-person-check"></i> Register Account
+            </button>
+          </form>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- =========================================================================
+       2. MAIN APPLICATION CONTAINER (When authenticated)
+       ========================================================================= -->
+  <div class="app-container d-none" id="appContainer">
+
+    <!-- Desktop Sidebar -->
+    <aside class="app-sidebar">
+      <div class="sidebar-header">
+        <div class="brand-badge">
+          <div class="brand-icon-box">
+            <i class="bi bi-heart-pulse-fill"></i>
+          </div>
+          <div>
+            <div class="brand-title">MediReminder</div>
+            <div class="brand-sub">IDP2502 System</div>
+          </div>
+        </div>
+      </div>
+
+      <nav class="sidebar-nav">
+        <a href="#dashboard" class="nav-link-item active" data-view-target="dashboard">
+          <i class="bi bi-speedometer2"></i>
+          <span>Dashboard</span>
+        </a>
+        <a href="#medicines" class="nav-link-item" data-view-target="medicines">
+          <i class="bi bi-capsule"></i>
+          <span>My Medicines</span>
+        </a>
+        <a href="#history" class="nav-link-item" data-view-target="history">
+          <i class="bi bi-graph-up-arrow"></i>
+          <span>Adherence Stats</span>
+        </a>
+        <a href="#settings" class="nav-link-item" data-view-target="settings">
+          <i class="bi bi-gear"></i>
+          <span>Settings & Push</span>
+        </a>
+      </nav>
+
+      <!-- Sidebar User Profile Footer -->
+      <div class="sidebar-footer">
+        <div class="d-flex align-items-center justify-content-between">
+          <div class="user-mini-card">
+            <div class="user-avatar-circle user-avatar-initial">U</div>
+            <div style="line-height: 1.2;">
+              <div class="fw-bold small text-dark user-name-display text-truncate" style="max-width: 130px;">User</div>
+              <div class="text-muted" style="font-size: 0.72rem;">Online • Asia/Kolkata</div>
+            </div>
+          </div>
+          <button class="btn btn-sm btn-light border" id="btnLogout" title="Logout">
+            <i class="bi bi-box-arrow-right text-danger"></i>
+          </button>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="app-main">
+
+      <!-- Topbar -->
+      <header class="app-topbar">
+        <div class="topbar-left">
+          <h4 class="topbar-title" id="pageTitle">Dashboard Overview</h4>
+        </div>
+        <div class="topbar-right">
+          <!-- Install App Banner Button -->
+          <button class="btn btn-sm btn-outline-primary d-none" id="pwaInstallBanner">
+            <i class="bi bi-download me-1"></i> <span id="btnInstallPwa">Install App</span>
+          </button>
+
+          <!-- Add Medicine Button -->
+          <button class="btn btn-primary-custom btn-sm" onclick="window.MediReminderApp.openMedicineModal()">
+            <i class="bi bi-plus-lg"></i> Add Medicine
+          </button>
+        </div>
+      </header>
+
+      <!-- VIEW PANELS -->
+      <div class="container-fluid px-3 px-md-4 py-4">
+
+        <!-- ===================================================================
+             PANEL 1: DASHBOARD
+             =================================================================== -->
+        <div class="view-panel" id="view-dashboard">
+          
+          <!-- Banner Hero Card -->
+          <div class="card card-modern card-gradient-primary p-4 mb-4 position-relative overflow-hidden">
+            <div class="row align-items-center position-relative" style="z-index: 2;">
+              <div class="col-12 col-md-8">
+                <span class="badge bg-white text-primary fw-bold mb-2">Today's Adherence Pulse</span>
+                <h3 class="fw-bold mb-1">Hello, <span class="user-name-display">Patient</span>! 👋</h3>
+                <p class="mb-3 opacity-90">Keep up your daily medicine regimen to maintain optimal health adherence.</p>
+                
+                <div class="d-flex align-items-center gap-3">
+                  <div class="flex-grow-1" style="max-width: 320px;">
+                    <div class="progress" style="height: 10px; background: rgba(255, 255, 255, 0.3);">
+                      <div class="progress-bar bg-success" id="adherenceProgressBar" role="progressbar" style="width: 0%;"></div>
+                    </div>
+                  </div>
+                  <div class="fw-bold fs-5" id="kpiAdherence">0%</div>
+                </div>
+              </div>
+              <div class="col-12 col-md-4 text-md-end mt-3 mt-md-0">
+                <div class="d-inline-flex p-3 rounded-4 bg-white text-primary shadow-sm align-items-center gap-3">
+                  <i class="bi bi-bell-fill fs-2 text-warning"></i>
+                  <div class="text-start">
+                    <div class="text-muted small fw-semibold">Next Scheduled Dose</div>
+                    <div class="fw-bold text-dark fs-6" id="nextDoseText">Live Sync Active</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- KPI Counters Row -->
+          <div class="row g-3 mb-4">
+            <div class="col-6 col-lg">
+              <div class="kpi-card">
+                <div class="kpi-icon-box bg-primary-subtle text-primary">
+                  <i class="bi bi-capsule"></i>
+                </div>
+                <div class="kpi-number text-primary" id="kpiTotalMeds">0</div>
+                <div class="kpi-label">Active Medicines</div>
+              </div>
+            </div>
+
+            <div class="col-6 col-lg">
+              <div class="kpi-card">
+                <div class="kpi-icon-box bg-info-subtle text-info">
+                  <i class="bi bi-calendar-check"></i>
+                </div>
+                <div class="kpi-number text-info" id="kpiScheduled">0</div>
+                <div class="kpi-label">Today's Doses</div>
+              </div>
+            </div>
+
+            <div class="col-6 col-lg">
+              <div class="kpi-card">
+                <div class="kpi-icon-box bg-success-subtle text-success">
+                  <i class="bi bi-check2-circle"></i>
+                </div>
+                <div class="kpi-number text-success" id="kpiTaken">0</div>
+                <div class="kpi-label">Doses Taken</div>
+              </div>
+            </div>
+
+            <div class="col-6 col-lg">
+              <div class="kpi-card">
+                <div class="kpi-icon-box bg-danger-subtle text-danger">
+                  <i class="bi bi-x-circle"></i>
+                </div>
+                <div class="kpi-number text-danger" id="kpiMissed">0</div>
+                <div class="kpi-label">Missed Doses</div>
+              </div>
+            </div>
+
+            <div class="col-12 col-lg">
+              <div class="kpi-card">
+                <div class="kpi-icon-box bg-warning-subtle text-warning">
+                  <i class="bi bi-hourglass-split"></i>
+                </div>
+                <div class="kpi-number text-warning" id="kpiPending">0</div>
+                <div class="kpi-label">Pending Doses</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Today's Timeline & Weekly Chart Row -->
+          <div class="row g-4">
+            <!-- Timeline of Reminders -->
+            <div class="col-12 col-xl-7">
+              <div class="card card-modern p-4 h-100">
+                <div class="d-flex align-items-center justify-content-between mb-3 pb-2 border-bottom">
+                  <div>
+                    <h5 class="fw-bold mb-0 text-dark">Today's Schedule & Reminders</h5>
+                    <span class="text-muted small">Live timeline with instant intake actions</span>
+                  </div>
+                  <button class="btn btn-sm btn-light border" onclick="window.MediReminderApp.loadDashboardSummary()">
+                    <i class="bi bi-arrow-clockwise"></i> Refresh
+                  </button>
+                </div>
+
+                <div id="todayTimelineContainer">
+                  <!-- Injected via JavaScript -->
+                </div>
+              </div>
+            </div>
+
+            <!-- Weekly Trend Chart -->
+            <div class="col-12 col-xl-5">
+              <div class="card card-modern p-4 h-100">
+                <div class="d-flex align-items-center justify-content-between mb-3 pb-2 border-bottom">
+                  <div>
+                    <h5 class="fw-bold mb-0 text-dark">7-Day Adherence Performance</h5>
+                    <span class="text-muted small">Daily intake consistency</span>
+                  </div>
+                  <i class="bi bi-bar-chart-fill text-primary fs-5"></i>
+                </div>
+
+                <div style="height: 280px; position: relative;">
+                  <canvas id="weeklyAdherenceChart"></canvas>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- ===================================================================
+             PANEL 2: MEDICINES MANAGEMENT
+             =================================================================== -->
+        <div class="view-panel d-none" id="view-medicines">
+          <div class="d-flex align-items-center justify-content-between mb-4">
+            <div>
+              <h4 class="fw-bold text-dark mb-1">Medication Prescriptions</h4>
+              <p class="text-muted small mb-0">Configure dosages, schedules, instructions, and durations.</p>
+            </div>
+            <button class="btn btn-primary-custom" onclick="window.MediReminderApp.openMedicineModal()">
+              <i class="bi bi-plus-lg"></i> Add New Medicine
+            </button>
+          </div>
+
+          <div class="row" id="medicinesGridContainer">
+            <!-- Injected via JavaScript -->
+          </div>
+        </div>
+
+        <!-- ===================================================================
+             PANEL 3: ADHERENCE STATS & REPORTS
+             =================================================================== -->
+        <div class="view-panel d-none" id="view-history">
+          <div class="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-2">
+            <div>
+              <h4 class="fw-bold text-dark mb-1">Adherence Analytics & Audit Logs</h4>
+              <p class="text-muted small mb-0">Track longitudinal medical adherence and export data for healthcare providers.</p>
+            </div>
+            <a href="/api/adherence/export" class="btn btn-outline-primary btn-sm" download>
+              <i class="bi bi-download me-1"></i> Export CSV Report
+            </a>
+          </div>
+
+          <!-- Stats Summary Banner -->
+          <div class="row g-3 mb-4">
+            <div class="col-6 col-md-3">
+              <div class="kpi-card text-center">
+                <div class="kpi-label">Overall Adherence</div>
+                <div class="kpi-number text-primary mt-2" id="statOverallRate">0%</div>
+              </div>
+            </div>
+            <div class="col-6 col-md-3">
+              <div class="kpi-card text-center">
+                <div class="kpi-label">Current Streak</div>
+                <div class="kpi-number text-success mt-2" id="statStreak">0 Days</div>
+              </div>
+            </div>
+            <div class="col-6 col-md-3">
+              <div class="kpi-card text-center">
+                <div class="kpi-label">Total Doses Taken</div>
+                <div class="kpi-number text-success mt-2" id="statTotalTaken">0</div>
+              </div>
+            </div>
+            <div class="col-6 col-md-3">
+              <div class="kpi-card text-center">
+                <div class="kpi-label">Total Doses Missed</div>
+                <div class="kpi-number text-danger mt-2" id="statTotalMissed">0</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Charts Row -->
+          <div class="row g-4 mb-4">
+            <div class="col-12 col-lg-8">
+              <div class="card card-modern p-4">
+                <h5 class="fw-bold mb-1 text-dark">30-Day Adherence Trend</h5>
+                <span class="text-muted small mb-3 d-block">Daily percentage compliance over the past month</span>
+                <div style="height: 260px; position: relative;">
+                  <canvas id="monthlyAdherenceChart"></canvas>
+                </div>
+              </div>
+            </div>
+
+            <div class="col-12 col-lg-4">
+              <div class="card card-modern p-4">
+                <h5 class="fw-bold mb-1 text-dark">Doses Breakdown</h5>
+                <span class="text-muted small mb-3 d-block">Taken vs Missed proportion</span>
+                <div style="height: 260px; position: relative;">
+                  <canvas id="statusDoughnutChart"></canvas>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- History Logs Table -->
+          <div class="card card-modern p-4">
+            <div class="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2">
+              <h5 class="fw-bold mb-0 text-dark">Medication Intake History</h5>
+              
+              <div class="btn-group btn-group-sm" role="group">
+                <button type="button" class="btn btn-outline-secondary active" onclick="window.MediReminderApp.loadReminderHistory('all')">All</button>
+                <button type="button" class="btn btn-outline-success" onclick="window.MediReminderApp.loadReminderHistory('taken')">Taken</button>
+                <button type="button" class="btn btn-outline-danger" onclick="window.MediReminderApp.loadReminderHistory('missed')">Missed</button>
+              </div>
+            </div>
+
+            <div class="table-responsive">
+              <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                  <tr>
+                    <th>Date</th>
+                    <th>Scheduled Time</th>
+                    <th>Medicine</th>
+                    <th>Instructions</th>
+                    <th>Status</th>
+                    <th>Recorded Timestamp</th>
+                  </tr>
+                </thead>
+                <tbody id="historyTableBody">
+                  <!-- Injected via JavaScript -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- ===================================================================
+             PANEL 4: SETTINGS & PUSH
+             =================================================================== -->
+        <div class="view-panel d-none" id="view-settings">
+          <div class="mb-4">
+            <h4 class="fw-bold text-dark mb-1">System Settings & Device Preferences</h4>
+            <p class="text-muted small mb-0">Manage Web Push notifications, timezone, profile, and project demo data.</p>
+          </div>
+
+          <div class="row g-4">
+            <!-- Web Push Notifications Card -->
+            <div class="col-12 col-md-6">
+              <div class="card card-modern p-4 h-100">
+                <div class="d-flex align-items-center gap-3 mb-3">
+                  <div class="kpi-icon-box bg-primary-subtle text-primary mb-0">
+                    <i class="bi bi-bell-fill"></i>
+                  </div>
+                  <div>
+                    <h5 class="fw-bold mb-0">Web Push Notifications</h5>
+                    <span class="text-muted small">Real-time alerts via Service Worker & VAPID</span>
+                  </div>
+                </div>
+
+                <p class="text-muted small mb-3">
+                  MediReminder uses the Web Push API and background service workers to send real-time alerts even when the browser tab is closed.
+                </p>
+
+                <div class="d-flex align-items-center justify-content-between p-3 bg-light rounded-3 mb-3 border">
+                  <div>
+                    <div class="fw-bold small text-dark">Subscription Status</div>
+                    <div id="pushStatusText" class="mt-1"><span class="badge bg-secondary">Checking...</span></div>
+                  </div>
+                  <button class="btn btn-sm btn-primary-custom" id="btnTogglePush">Enable Web Push</button>
+                </div>
+
+                <button class="btn btn-outline-primary btn-sm w-100" id="btnTestPush">
+                  <i class="bi bi-play-circle me-1"></i> Send Immediate Test Push Alert 🔔
+                </button>
+              </div>
+            </div>
+
+            <!-- Project Demo Data Seeder Card -->
+            <div class="col-12 col-md-6">
+              <div class="card card-modern p-4 h-100">
+                <div class="d-flex align-items-center gap-3 mb-3">
+                  <div class="kpi-icon-box bg-success-subtle text-success mb-0">
+                    <i class="bi bi-database-check"></i>
+                  </div>
+                  <div>
+                    <h5 class="fw-bold mb-0">Project Demonstration Data</h5>
+                    <span class="text-muted small">One-Click Realistic Records</span>
+                  </div>
+                </div>
+
+                <p class="text-muted small mb-3">
+                  Instantly populate this user account with 5 realistic medical prescriptions (Metformin, Atorvastatin, Amoxicillin, Cetirizine, Vitamin D3) and 14 days of realistic adherence history for college presentation evaluation.
+                </p>
+
+                <button class="btn btn-success-custom w-100 justify-content-center" id="btnSeedDemo">
+                  <i class="bi bi-lightning-charge me-1"></i> Seed 14 Days Sample Data
+                </button>
+              </div>
+            </div>
+
+            <!-- Profile Settings -->
+            <div class="col-12 col-md-6">
+              <div class="card card-modern p-4">
+                <h5 class="fw-bold mb-3">User Profile</h5>
+                <form id="profileForm">
+                  <div class="mb-3">
+                    <label class="form-label small fw-semibold text-muted">Full Name</label>
+                    <input type="text" class="form-control" id="profileFullName" required>
+                  </div>
+                  <div class="mb-3">
+                    <label class="form-label small fw-semibold text-muted">Timezone</label>
+                    <select class="form-select" id="profileTimezone">
+                      <option value="Asia/Kolkata">Asia/Kolkata (IST +05:30)</option>
+                      <option value="UTC">UTC (Coordinated Universal Time)</option>
+                      <option value="America/New_York">America/New_York (EST)</option>
+                      <option value="Europe/London">Europe/London (GMT/BST)</option>
+                    </select>
+                  </div>
+                  <button type="submit" class="btn btn-primary-custom btn-sm">Save Profile</button>
+                </form>
+              </div>
+            </div>
+
+            <!-- Password Change -->
+            <div class="col-12 col-md-6">
+              <div class="card card-modern p-4">
+                <h5 class="fw-bold mb-3">Security & Password</h5>
+                <form id="passwordForm">
+                  <div class="mb-2">
+                    <label class="form-label small fw-semibold text-muted">Current Password</label>
+                    <input type="password" class="form-control" id="pwdCurrent" required>
+                  </div>
+                  <div class="mb-3">
+                    <label class="form-label small fw-semibold text-muted">New Password (min 6 characters)</label>
+                    <input type="password" class="form-control" id="pwdNew" minlength="6" required>
+                  </div>
+                  <button type="submit" class="btn btn-outline-primary btn-sm">Update Password</button>
+                </form>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+      </div>
+
+    </main>
+
+    <!-- Floating Action Button for Mobile -->
+    <button class="fab-add" id="fabAddMed" title="Add Medicine">
+      <i class="bi bi-plus-lg"></i>
+    </button>
+
+    <!-- Mobile Bottom Navigation Bar -->
+    <nav class="mobile-bottom-nav">
+      <div class="mobile-nav-items">
+        <a href="#dashboard" class="mobile-nav-link active" data-view-target="dashboard">
+          <i class="bi bi-speedometer2"></i>
+          <span>Dashboard</span>
+        </a>
+        <a href="#medicines" class="mobile-nav-link" data-view-target="medicines">
+          <i class="bi bi-capsule"></i>
+          <span>Medicines</span>
+        </a>
+        <a href="#history" class="mobile-nav-link" data-view-target="history">
+          <i class="bi bi-graph-up"></i>
+          <span>Adherence</span>
+        </a>
+        <a href="#settings" class="mobile-nav-link" data-view-target="settings">
+          <i class="bi bi-gear"></i>
+          <span>Settings</span>
+        </a>
+      </div>
+    </nav>
+
+  </div>
+
+  <!-- =========================================================================
+       3. MODAL: ADD / EDIT MEDICINE
+       ========================================================================= -->
+  <div class="modal fade" id="medicineModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title fw-bold" id="medicineModalTitle">Add Medicine Schedule</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+
+        <form id="medicineForm">
+          <input type="hidden" id="medId">
+          <div class="modal-body">
+            <div class="row g-3">
+              <!-- Medicine Name -->
+              <div class="col-12 col-md-8">
+                <label class="form-label small fw-semibold text-muted">Medicine Name *</label>
+                <input type="text" class="form-control" id="medName" placeholder="e.g. Metformin HCl, Paracetamol" required>
+              </div>
+
+              <!-- Dosage -->
+              <div class="col-12 col-md-4">
+                <label class="form-label small fw-semibold text-muted">Dosage Strength *</label>
+                <input type="text" class="form-control" id="medDosage" placeholder="e.g. 500 mg, 10 ml, 1 tablet" required>
+              </div>
+
+              <!-- Medicine Type -->
+              <div class="col-12 col-md-6">
+                <label class="form-label small fw-semibold text-muted">Form Factor / Type</label>
+                <select class="form-select" id="medType">
+                  <option value="Tablet" selected>Tablet</option>
+                  <option value="Capsule">Capsule</option>
+                  <option value="Syrup">Syrup (Liquid)</option>
+                  <option value="Injection">Injection</option>
+                  <option value="Drops">Eye/Ear Drops</option>
+                  <option value="Inhaler">Inhaler</option>
+                  <option value="Topical">Ointment / Topical</option>
+                  <option value="Other">Other</option>
+                </select>
+              </div>
+
+              <!-- Instructions -->
+              <div class="col-12 col-md-6">
+                <label class="form-label small fw-semibold text-muted">Meal Instructions</label>
+                <select class="form-select" id="medInstructions">
+                  <option value="After food" selected>After Food</option>
+                  <option value="Before food">Before Food (Empty Stomach)</option>
+                  <option value="With food">With Food</option>
+                  <option value="Bedtime">At Bedtime</option>
+                  <option value="As needed">As Needed (SOS)</option>
+                </select>
+              </div>
+
+              <!-- Schedule Times Container -->
+              <div class="col-12">
+                <div class="d-flex align-items-center justify-content-between mb-2">
+                  <label class="form-label small fw-semibold text-muted mb-0">Daily Reminder Times (24-hr)</label>
+                  <button type="button" class="btn btn-sm btn-outline-primary" id="btnAddScheduleTime">
+                    <i class="bi bi-plus"></i> Add Time
+                  </button>
+                </div>
+                <div id="scheduleTimesContainer">
+                  <!-- Injected via JavaScript -->
+                </div>
+              </div>
+
+              <!-- Start Date & End Date -->
+              <div class="col-12 col-md-6">
+                <label class="form-label small fw-semibold text-muted">Start Date</label>
+                <input type="date" class="form-control" id="medStartDate" required>
+              </div>
+
+              <div class="col-12 col-md-6">
+                <label class="form-label small fw-semibold text-muted">End Date (Optional / Chronic)</label>
+                <input type="date" class="form-control" id="medEndDate">
+                <div class="form-text">Leave blank if this is an ongoing medication.</div>
+              </div>
+
+              <!-- Notes & Color -->
+              <div class="col-12 col-md-9">
+                <label class="form-label small fw-semibold text-muted">Doctor Notes / Reminders</label>
+                <input type="text" class="form-control" id="medNotes" placeholder="e.g. Prescribed by Dr. Roy for blood pressure control">
+              </div>
+
+              <div class="col-12 col-md-3">
+                <label class="form-label small fw-semibold text-muted">Color Tag</label>
+                <input type="color" class="form-control form-control-color w-100" id="medColor" value="#2563eb" title="Choose color identifier">
+              </div>
+            </div>
+          </div>
+
+          <div class="modal-footer">
+            <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+            <button type="submit" class="btn btn-primary-custom">Save Medicine</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- External Vendor Scripts -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+
+  <!-- Application Scripts -->
+  <script src="/static/js/notifications.js"></script>
+  <script src="/static/js/app.js"></script>
+</body>
+</html>

@@ -4,6 +4,7 @@ import csv
 from datetime import datetime, date, timedelta
 from functools import wraps
 import pytz
+import jinja2
 from flask import Flask, request, jsonify, render_template, send_from_directory, session, Response, make_response
 from flask_cors import CORS
 
@@ -13,7 +14,16 @@ from scheduler import init_scheduler, update_adherence_summary, send_push_to_use
 from vapid_manager import get_or_create_vapid_keys
 
 def create_app():
-    app = Flask(__name__, static_folder='static', template_folder='templates')
+    base_dir = os.path.abspath(os.path.dirname(__file__))
+    templates_dir = os.path.join(base_dir, 'templates')
+    static_dir = os.path.join(base_dir, 'static')
+
+    app = Flask(__name__, static_folder=static_dir, template_folder=templates_dir)
+    # Support index.html located either in templates/ or directly in the repository root
+    app.jinja_loader = jinja2.ChoiceLoader([
+        jinja2.FileSystemLoader(templates_dir),
+        jinja2.FileSystemLoader(base_dir)
+    ])
     app.config.from_object(Config)
 
     # Initialize CORS
