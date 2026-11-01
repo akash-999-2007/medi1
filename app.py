@@ -5,7 +5,7 @@ from datetime import datetime, date, timedelta
 from functools import wraps
 import pytz
 import jinja2
-from flask import Flask, request, jsonify, render_template, send_from_directory, session, Response, make_response
+from flask import Flask, request, jsonify, render_template, send_from_directory, send_file, session, Response, make_response
 from flask_cors import CORS
 
 from config import Config
@@ -77,22 +77,71 @@ def create_app():
         return datetime.now(tz).date()
 
     # -------------------------------------------------------------
-    # Frontend & PWA Serving
+    # Frontend & PWA Serving (Smart multi-path fallback)
     # -------------------------------------------------------------
     @app.route('/')
     def index():
-        return render_template('index.html')
+        candidates = [
+            os.path.join(base_dir, 'templates', 'index.html'),
+            os.path.join(base_dir, 'index.html'),
+        ]
+        # Search recursively for index.html if not in standard locations
+        for root, dirs, files in os.walk(base_dir):
+            if 'index.html' in files:
+                candidates.insert(0, os.path.join(root, 'index.html'))
+                break
+
+        for path in candidates:
+            if os.path.isfile(path):
+                return send_file(path)
+
+        tree = []
+        for root, dirs, files in os.walk(base_dir):
+            for f in files:
+                tree.append(os.path.relpath(os.path.join(root, f), base_dir))
+        return f"<h3>MediReminder: index.html not found on server</h3><p>Uploaded repository files:</p><pre>{chr(10).join(tree)}</pre>", 404
 
     @app.route('/manifest.json')
     def manifest():
-        return send_from_directory('static', 'manifest.json', mimetype='application/manifest+json')
+        candidates = [
+            os.path.join(base_dir, 'static', 'manifest.json'),
+            os.path.join(base_dir, 'manifest.json'),
+        ]
+        for c in candidates:
+            if os.path.isfile(c):
+                return send_file(c, mimetype='application/manifest+json')
+        return jsonify({'error': 'manifest not found'}), 404
 
     @app.route('/sw.js')
     def service_worker():
-        response = make_response(send_from_directory('static/js', 'sw.js', mimetype='application/javascript'))
-        response.headers['Service-Worker-Allowed'] = '/'
-        response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
-        return response
+        candidates = [
+            os.path.join(base_dir, 'static', 'js', 'sw.js'),
+            os.path.join(base_dir, 'static', 'sw.js'),
+            os.path.join(base_dir, 'sw.js'),
+        ]
+        for c in candidates:
+            if os.path.isfile(c):
+                response = make_response(send_file(c, mimetype='application/javascript'))
+                response.headers['Service-Worker-Allowed'] = '/'
+                response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
+                return response
+        return make_response("// Service worker placeholder", 200, {'Content-Type': 'application/javascript'})
+
+    @app.route('/static/<path:filename>')
+    def custom_static(filename):
+        candidates = [
+            os.path.join(base_dir, 'static', filename),
+            os.path.join(base_dir, filename),
+        ]
+        for c in candidates:
+            if os.path.isfile(c):
+                return send_file(c)
+        return jsonify({'error': f'Static file {filename} not found'}), 404
+
+    @app.errorhandler(500)
+    def handle_500(e):
+        import traceback
+        return f"<h3>500 Internal Server Error</h3><pre>{traceback.format_exc()}</pre>", 500
 
     # -------------------------------------------------------------
     # Authentication Endpoints
